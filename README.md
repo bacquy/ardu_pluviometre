@@ -9,6 +9,7 @@ Le code est un peu crado je vous laisse le corriger si besoin.
 
 ATTENTION aux variables MQTT et la surface de l'entonnoir est hardcodé et son topic MQTT n'est pas exploité (to be fix)
 
+--------------
 
 This code sends the data to an MQTT broker (Mosquitto in my case). 
 It collects the number of switch toggles, the amount of milliliters passed through the funnel, as well as the number of mm/m² (the most important). 
