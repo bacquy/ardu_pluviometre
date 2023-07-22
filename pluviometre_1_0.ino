@@ -92,7 +92,7 @@ void ICACHE_RAM_ATTR onChangeD6() {
       mlAverse += mlParBascule;
 
       // Ajouter mm à l'averse actuelle
-      mmAverse = (mlAverse/35);
+      mmAverse = (mlAverse/(35/10);
 
       // Ajouter coompte de bascule à l'averse actuelle
       cptAverse += 1;
