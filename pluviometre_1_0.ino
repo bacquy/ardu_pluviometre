@@ -60,8 +60,8 @@ void ICACHE_RAM_ATTR onChangeD6() {
       // Une bascule (changement d'état) correspond à mlParBascule ml
       totalMl += mlParBascule;
 
-      // Conversion en millimètres par mètre carré (mm/m² = ml / horizontal surface funnel) /!\ you have to change here I forgot to make this change
-      totalMmPerM2 = (totalMl / 35);
+      // Conversion en millimètres par mètre carré (1mm/m² = 1ml/m² or 3,5ml per 3500mm³ or 0.8mm/m² per switch) /!\ you have to change here I forgot to make this change
+      totalMmPerM2 = (totalMl / ( 35 / 10 );
 
       // Envoi du nombre de changements d'état au topic MQTT avec retain=true
       String countPayload = String(countD6);
