@@ -39,29 +39,39 @@ float mlParBascule = 0.0;
 // pour l'Averse en cours
 float mlAverse = 0.0;
 float mmAverse = 0.0;
-int cptAverse = 0;
-int averse = 0;
+int cptAverse = 0; // nombre de bascules par averse
+int nbAverse = 0; // nombre d'averse
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+
+void publishAverse() {
+  mlAverse = 0.0;
+  mmAverse = 0.0;
+  cptAverse = 0;
+  nbAverse += 1;
+  
+  String aversePayload = String(nbAverse);
+  client.publish(mqttTopicAverse, aversePayload.c_str(), true);
+}
+
 void ICACHE_RAM_ATTR onChangeD6() {
   if (millis() - lastDebounceTime > debounceDelay) {
-    int newState = digitalRead(pinD6);
-    if (stateD6 != newState) {
         // Vérifier le timeout pour déterminer si une nouvelle averse a commencé
-      if (isNewAverse && millis() - lastChangeTime > averseTimeout * 60000) {
+      if (isNewAverse && millis() - lastChangeTime > averseTimeout * 60000 || nbAverse == 0){
         isNewAverse = false;
+        Serial.println("nouvelle averse");
         publishAverse();
       }
-      stateD6 = newState;
+      
       countD6++;
       
       // Une bascule (changement d'état) correspond à mlParBascule ml
       totalMl += mlParBascule;
 
-      // Conversion en millimètres par mètre carré (1mm/m² = 1ml/m² or 3,5ml per 3500mm³ or 0.8mm/m² per switch) /!\ you have to change here I forgot to make this change
-      totalMmPerM2 = (totalMl / ( 35 / 10 );
+      // Conversion en millimètres par mètre carré (mm/m²)
+      totalMmPerM2 = (totalMl / (surfaceEntonnoirCm2 / 10));
 
       // Envoi du nombre de changements d'état au topic MQTT avec retain=true
       String countPayload = String(countD6);
@@ -83,7 +93,7 @@ void ICACHE_RAM_ATTR onChangeD6() {
       Serial.print("Quantité d'eau en millilitres : ");
       Serial.println(totalMl);
       Serial.print("Nombre d'averses : ");
-      Serial.println(averse);
+      Serial.println(nbAverse);
 
 // PAR AVERSE
 
@@ -92,10 +102,11 @@ void ICACHE_RAM_ATTR onChangeD6() {
       mlAverse += mlParBascule;
 
       // Ajouter mm à l'averse actuelle
-      mmAverse = (mlAverse/(35/10);
+      mmAverse = (mlAverse/(surfaceEntonnoirCm2/10));
 
       // Ajouter coompte de bascule à l'averse actuelle
       cptAverse += 1;
+
      
       // Envoi ml pour l'averse en cours au topic MQTT avec retain=true
       String mlAversePayload = String(mlAverse);
@@ -122,7 +133,6 @@ void ICACHE_RAM_ATTR onChangeD6() {
     }
     lastDebounceTime = millis();
   }
-}
 
 void setup() {
   Serial.begin(9600);
@@ -137,6 +147,7 @@ void setup() {
 
   client.setServer(mqttServer, mqttPort);
   client.setCallback(callback);
+
 
   attachInterrupt(digitalPinToInterrupt(pinD6), onChangeD6, CHANGE);
 
@@ -189,14 +200,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
     char buffer[length + 1];
     memcpy(buffer, payload, length);
     buffer[length] = '\0';
-    cptAverse = atoi(buffer);
+    nbAverse = atoi(buffer);
   }
 }
 
 void reconnect() {
   while (!client.connected()) {
     Serial.println("Connecting to MQTT...");
-    if (client.connect("ESP8266Client", mqttUser, mqttPassword)) {
+    if (client.connect(mqttClientID, mqttUser, mqttPassword)) {
       Serial.println("Connected to MQTT");
 
       // Lecture des valeurs existantes des topics MQTT au démarrage
@@ -214,16 +225,4 @@ void reconnect() {
       delay(5000);
     }
   }
-}
-
-void publishAverse() {
-  mlAverse = 0.0;
-  mmAverse = 0.0;
-  cptAverse = 0;
-  averse += 1;
-  
-  String aversePayload = String(averse);
-  client.publish(mqttTopicAverse, aversePayload.c_str(), true);
-  Serial.print("Nouvelle averse - Nombre d'averses : ");
-  Serial.println(averse);
 }
